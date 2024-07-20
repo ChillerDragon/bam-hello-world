@@ -1,0 +1,68 @@
+name: Build
+
+on:
+  push:
+  pull_request:
+  merge_group:
+
+jobs:
+  build-cmake:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macOS-latest, windows-latest, ubuntu-20.04]
+        include:
+        - os: ubuntu-latest
+          cmake-init-env: CXXFLAGS=-Werror
+        - os: ubuntu-20.04
+          cmake-path: /usr/bin/
+          cmake-init-env: CXXFLAGS=-Werror
+        - os: macOS-latest
+          cmake-init-env: CXXFLAGS=-Werror
+        - os: windows-latest
+          cmake-args: -A x64
+          cmake-init-env: CXXFLAGS=/WX LDFLAGS=/WX
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: true
+
+    - name: Prepare Linux
+      if: contains(matrix.os, 'ubuntu')
+      run: |
+        git clone https://github.com/matricks/bam
+        cd bam
+        ./make_unix.sh
+
+    - name: Prepare macOS
+      if: contains(matrix.os, 'macOS')
+      run: |
+        git clone https://github.com/matricks/bam
+        cd bam
+        ./make_unix.sh
+        uname -a
+        uname
+        uname -m
+
+    - name: Prepare Windows
+      if: contains(matrix.os, 'windows')
+      run: |
+        git clone https://github.com/matricks/bam
+        cd bam
+        ls
+        .\make_win64_msvc.bat
+
+    - name: Build and run (nix)
+      if: contains(matrix.os, 'macOS') || contains(matrix.os, 'ubuntu')
+      run: |
+        ./bam/bam
+        ./hello
+
+    - name: Build and run (windows)
+      if: contains(matrix.os, 'windows')
+      run: |
+        ./bam/bame.exe
+        hello.exe
+
